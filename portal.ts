@@ -32,6 +32,20 @@ export type OpenNodesData = {
   nodes: Array<ContributionContract>;
 };
 
+// Contract amounts are in atomic units: 1 SESH = 10^9.
+const STAKING_REQUIREMENT = 25_000 * 10 ** 9;
+
+/**
+ * @returns the amount still open to the public: a reserved slot counts in full before it is paid.
+ */
+export function remainingContribution(contract: ContributionContract): number {
+  let taken = 0;
+  for (const { amount, reserved } of contract.contributors) {
+    taken += Math.max(amount, reserved);
+  }
+  return STAKING_REQUIREMENT - taken;
+}
+
 // `address` goes into links the bot posts, so anything but a contract address is dropped.
 const CONTRACT_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
 
@@ -63,6 +77,10 @@ async function fetchOpenNodes(): Promise<OpenNodesData | null> {
         console.warn(
           `Skipping open contract with unexpected address: ${JSON.stringify(item.address)}`,
         );
+        continue;
+      }
+      // The portal keeps a contract open until every reserved contributor has paid.
+      if (remainingContribution(item) <= 0) {
         continue;
       }
       openNodes.push(item);

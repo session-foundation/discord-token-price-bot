@@ -1,6 +1,6 @@
 import { ActionRowBuilder, ButtonBuilder, EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { SESSION_STAKING_PORTAL_URL, TOKEN_SYMBOL } from '../env.ts';
-import { type ContributionContract, getOpenNodes } from '../portal.ts';
+import { type ContributionContract, getOpenNodes, remainingContribution } from '../portal.ts';
 import type { Command } from '../types.ts';
 
 /**
@@ -16,8 +16,6 @@ const collapseString = (str: string, leadingChars = 6, trailingChars = 4): strin
   return `${str.slice(0, leadingChars)}…${str.slice(-trailingChars)}`;
 };
 
-// Contract amounts are in atomic units: 1 SESH = 10^9.
-const STAKING_REQUIREMENT = 25_000 * 10 ** 9;
 const MAX_CONTRIBUTORS = 10;
 
 const formatSESH = (value: number) => {
@@ -40,12 +38,7 @@ export function createOpenContractEmbed(contract: ContributionContract, descript
     style: 'percent',
   });
 
-  let totalStaked = 0;
-  for (const contributor of contract.contributors) {
-    totalStaked += contributor.amount || contributor.reserved;
-  }
-
-  const remainingStakeFormatted = formatSESH(STAKING_REQUIREMENT - totalStaked);
+  const remainingStakeFormatted = formatSESH(remainingContribution(contract));
 
   const fields = [
     contributorField,
