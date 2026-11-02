@@ -58,7 +58,8 @@ let snapshot: OpenNodesData | null = null;
 const refreshListeners: Array<(openNodes: OpenNodesData) => void> = [];
 
 async function fetchOpenNodes(): Promise<OpenNodesData | null> {
-  const url = `${SESSION_STAKING_PORTAL_URL}/api/ssb/contract/contribution`;
+  // Backends that predate the `status` filter ignore it and return every contract.
+  const url = `${SESSION_STAKING_PORTAL_URL}/api/ssb/contract/contribution?status=${CONTRIBUTION_CONTRACT_STATUS.OpenForPublicContrib}`;
 
   const jsonResult = (await fetchJson(url, REFRESH_TIMEOUT_MS)) as { contracts?: unknown } | null;
   if (!jsonResult) {
